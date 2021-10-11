@@ -1,0 +1,29 @@
+graph G {
+
+    /**
+     * Tables and attributes def
+     */
+	"users" [shape=circle];
+	"orders" [shape=circle];
+    "delivery_status" [shape=circle];
+	"contractor" [shape=circle];
+	"ressource" [shape=circle];
+    "planet" [shape=circle];
+
+	"user_orders" [shape=diamond];
+    "ordered_to_contractors" [shape=diamond]; 
+	"contractor_sells_ressource" [shape=diamond];
+
+    /**
+     *  Relations between tables
+     */
+    "users" -- "user_orders";
+    "user_orders" -- "order";
+    "orders" -- "delivery_status";
+    "orders" -- "ordered_to_contractors";
+    "ordered_to_contractors" -- "contractor";
+    "contractor" -- "contractor_sells_ressource";
+    "contractor_sells_ressource" -- "ressource";
+    "ressource" -- "planet";
+    
+}

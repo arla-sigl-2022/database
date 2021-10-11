@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres-14
+    networks:
+     - garlaxy-postgres
+    volumes:
+     - 'garlaxy-postgres-data:/var/lib/postgresql/data:rw'
+    environment:
+     - POSTGRES_PASSWORD=sigl2022
+     - POSTGRES_USER=sigl2022
+    ports:
+    - '5432:5432'
+  pgadmin4:
+    image: dpage/pgadmin4:6
+    container_name: pgadmin4
+    networks:
+     - garlaxy-postgres
+    volumes:
+     - 'garlaxy-pgadmin-data:/var/lib/pgadmin:rw'
+    environment:
+     - PGADMIN_DEFAULT_EMAIL=arla@sigl.fr
+     - PGADMIN_DEFAULT_PASSWORD=sigl2022
+    ports:
+     - '8040:80'
+
+networks:
+  garlaxy-postgres:
+    external:
+      name: garlaxy-postgres
+
+volumes: 
+    garlaxy-postgres-data:
+      external: true
+    garlaxy-pgadmin-data:
+      external: true
