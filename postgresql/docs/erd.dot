@@ -18,7 +18,7 @@ graph G {
      *  Relations between tables
      */
     "users" -- "user_orders";
-    "user_orders" -- "order";
+    "user_orders" -- "orders";
     "orders" -- "delivery_status";
     "orders" -- "ordered_to_contractors";
     "ordered_to_contractors" -- "contractor";
