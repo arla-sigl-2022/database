@@ -212,6 +212,25 @@ SELECT * FROM ressource_catalog;
 > Note: VIEW and MATERIALIZED VIEWS are differents. MATERIALIZED VIEWS is a PostgreSQL only feature where VIEW are default SQL views.
 > You can read more here: https://www.postgresql.org/docs/9.3/rules-materializedviews.html
 
+Create another view, using INNER JOIN to have an overview of orders with contractors.
+This view will be use in the mongodb part.
+
+From your pgAdmin UI, create a new view with name `orders_with_contractor` with the following SQL code:
+```sql
+ SELECT otc.order_id,
+    o.created_at AS order_date,
+    r.name AS ressource,
+    c.name AS contractor,
+    u.username
+   FROM ordered_to_contractor otc
+     JOIN user_orders uo ON otc.order_id = uo.order_id
+     JOIN orders o ON uo.order_id = o.id
+     JOIN contractor c ON otc.contractor_id = c.id
+     JOIN ressource r ON otc.ressource_id = r.id
+     JOIN users u ON u.id = uo.user_id;
+```
+
+> Note: This view will be usefull for later!
 
 ## Step 5: Expose your ressource catalog from your web API
 

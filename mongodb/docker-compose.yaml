@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  mongodb:
+    image: mongo:5.0.3
+    container_name: mongo-5
+    volumes:
+    - 'garlaxy-mongo-data:/data/db'
+    environment:
+    - MONGO_INITDB_ROOT_USERNAME=sigl2022
+    - MONGO_INITDB_ROOT_PASSWORD=sigl2022
+    ports:
+    - '27017:27017'
+
+volumes: 
+  garlaxy-mongo-data:
+    external: 
+      true
