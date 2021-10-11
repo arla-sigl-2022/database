@@ -190,11 +190,13 @@ From your pgAdmin UI, create a new view:
 - In the `Code` tab, just copy/paste the following `SELECT` statement
 
 ```sql
-SELECT p.name AS planet_name,
-  r.name AS ressource,
-  r.price
-FROM planet p, ressource r
-WHERE p.id = r.planet_id;
+ SELECT r.id,
+    p.name AS planete,
+    r.name AS ressource,
+    r.price AS prix
+   FROM planet p,
+    ressource r
+  WHERE p.id = r.planet_id;
 ```
 - Save your view
 
@@ -211,228 +213,41 @@ SELECT * FROM ressource_catalog;
 > You can read more here: https://www.postgresql.org/docs/9.3/rules-materializedviews.html
 
 
-## Step 5: Consume your view from your web API
+## Step 5: Expose your ressource catalog from your web API
 
-From your API, you need to install a new node module to interact with Postgres: [node-postgres](https://node-postgres.com)
+**Objective**: adapt your groupe's backend to read data from postgresql
+
+From your group's API, you need to install a new node module to interact with Postgres: [node-postgres](https://node-postgres.com)
 
 To install it, like any other node modules, type:
 ```sh
-# select correct version of node
-nvm use
+# from your backend/ folder (e.g. for group 13: groupe-13/backend)
+# select correct version of node (v16)
+nvm use v16
 # from your web api repository
 npm i --save pg
 ```
 
-Now you will add after the `FakeDB`, this `RDS` namespace:
-```ts
-import {QueryResult, Pool} from 'pg';
-
-export type UserHelpRequest = {
-    help_request_id: number;
-    owner_id: number;
-    owner_username: string;
-    title: string;
-    details: string;
-    city: string;
-    country: string;
-}
-
-/**
- * Connects to your Postgres database.
- * RDS stands for Relational Database System, which is a common designation
- * for SQL database like Postgres.
- */
-export namespace RDS {
-    // Create a pool of connection;
-    // to control number of concurrent connections.
-    // We leave default values for now.
-    const pool = new Pool({
-        host: "localhost",
-        port: 5432,
-        database: "garlaxy",
-        user: "sigl2022",
-        password: "sigl2022"
-    });
-
-    // Handler method to perform any kind of query 
-    // to your database
-    const query = async <T>(sql: string): Promise<T[]> => {
-        let result: QueryResult<T>;
-        
-        // Get the next connection available in the pool
-        const client = await pool.connect()
-       
-        result = await client.query<T>(sql)
-        
-        // release the connection
-        client.release();
-        return result.rows;
-    }
-    
-    /**
-     * Get next 
-     * @param page page number of help requests we want to query
-     * @param limit the size of the page of help requests we want to query
-     */
-    export const getHelpRequests = async (page: number, limit: number) => {
-        const helpRequests: UserHelpRequest[] = await query<UserHelpRequest>(`
-            SELECT * FROM user_help_requests
-            LIMIT ${limit} OFFSET ${page};
-        `)
-
-        return helpRequests;
-    }
-}
-```
-
-This new namespace will expose a `getHelpRequests` method that will query the view of Step 4 (on your localhost).
-
-Then, you just need to adapt your `/v1/help_requests` route to use `RDS.getHelpRequests(...)` instead of `FakeDB.getHelpRequest(...)`:
-```ts
-// From src/server.ts file
-//...
-import { /*...*/, RDS, UserHelpRequest } from "./db";
-//...
-app.get(
-  "/v1/help-request",
-  /* jwtCheck ,*/ // Remove the security
-  async (request: express.Request, response: express.Response) => {
-    // Getting value of page and limit query options:
-    // ex: http://<domain>/v1/help-request?page=1&limit=10
-    //  page == 1
-    //  limit == 10
-    try {
-      const { page, limit } = extractPageOptions(request);
-
-      // Query the page of help requests from your real relational database
-      const helpRequests: UserHelpRequest[] = await RDS.getHelpRequests(page, limit);
-
-      // sends the response back to the client, when node will be ready!
-      response.send(helpRequests);
-    } catch (e) {
-      // Something went wrong internally to the API,
-      // so we are returning a 500 HTTP status
-      response.statusCode = 500;
-      response.send({ error: e.message });
-    }
-  }
-);
-```
-> We  disable security on the /v1/help_request route to try out locally. This is not good for production!
+Copy the follwing changes in your backend:
+- [backend/src/database.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/files#diff-f74254c83354678ae4a3a3205ddab3712d159c21db220b4793073cd2f429b8c9): you are getting rid of this hard-coded list of ressource, and consume data from your local postgreSQL instead
+- [backend/src/server.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/files#diff-36e2c2dd1e67a7419cef780285f514e743e48ac994a01526288acd31707e09ae): make your service `async` since consomming data from postgreSQL is asynchronous. Renamed `DB` to `RDB` (stands for Relational Data Base)
 
 Start your api:
 ```sh
+# from backend/
 # select correct version of node
-nvm use
-# consider using nvm use before to have correct version of node
+nvm use v16
+node src/server.js
+```
+
+Start your frontend:
+```sh
+# from frontend/
+# select correct version of node
+nvm use v16
 npm start
 ```
 
-Try out and call your API from your browser: http://localhost:3000/v1/help-request?page=1&limit=5
+Login on your frontend, and you should see the ressource table, but this time the API is serving data from postgres.
 
-You should see 5 of help requests from your Postgres database.
-
-Once it works, you can put back the security check on your route:
-```ts
-// From src/server.ts file
-app.get(
-  "/v1/help-request",
-  jwtCheck,
-  async (request: express.Request, response: express.Response) => {
-  //...
-```
-
-## Step 6: Adapt your frontend
-
-The type of a help request has changed:
-```ts
-// Before
-export type HelpRequest = {
-    id: string;
-    username: string;
-    description: string;
-    location: string;
-}
-// Now
-export type UserHelpRequest = {
-    help_request_id: number;
-    owner_id: number;
-    owner_username: string;
-    title: string;
-    details: string;
-    city: string;
-    country: string;
-}
-```
-
-So you need to adapt the component that renders a help request to this new type.
-
-For instance, in the [group 11](https://github.com/ffauchille/arla-group-11), we use the [Table from material UI](https://material-ui.com/components/tables/).
-
-So the component which renders the table needs to move from:
-```tsx
-const HelpRequestTable: React.FC<HelpRequestTableProps> = ({
-  helpRequests,
-}) => {
-  return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Help request ID</TableCell>
-            <TableCell align="right">Location</TableCell>
-            <TableCell align="right">Description</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {helpRequests.map((hr, index) => (
-            <TableRow key={index}>
-              <TableCell component="th" scope="row">
-                {hr.id}
-              </TableCell>
-              <TableCell align="right">{hr.location}</TableCell>
-              <TableCell align="right">{hr.description}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-};
-```
-to: 
-```tsx
-const HelpRequestTable: React.FC<HelpRequestTableProps> = ({
-  helpRequests,
-}) => {
-  return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>From user</TableCell>
-            <TableCell align="right">Title</TableCell>
-            <TableCell align="right">Details</TableCell>
-            <TableCell align="right">City</TableCell>
-            <TableCell align="right">Country</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {helpRequests.map((hr, index) => (
-            <TableRow key={index}>
-              <TableCell component="th" scope="row">
-                {hr.owner_username}
-              </TableCell>
-              <TableCell align="right">{hr.title}</TableCell>
-              <TableCell align="right">{hr.details}</TableCell>
-              <TableCell align="right">{hr.city}</TableCell>
-              <TableCell align="right">{hr.country}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-};
-```
 
