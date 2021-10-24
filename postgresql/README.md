@@ -309,6 +309,6 @@ From your Group's project on github. Go to Settings > Secrets and add secrets wi
 Adapt your .github/workflows/main.yml by overriding your `backend/.env` file before building your image. 
 
 Copy the follwing change in your group's .github/workflows/ folder:
-- [.github/workflows/main.yml](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-7829468e86c1cc5d5133195b5cb48e1ff6c75e3e9203777f6b2e379d9e4882b3)
+- [.github/workflows/main.yml](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-7829468e86c1cc5d5133195b5cb48e1ff6c75e3e9203777f6b2e379d9e4882b3): create/overwrite backend/.env's file with values from your github secrets (e.g. production DB credentials). This way, you don't have to push them in your code!
 
 Commit and push, and your web-api should read ressources catalog from database.
