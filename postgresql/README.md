@@ -265,7 +265,7 @@ Copy the follwing changes in your backend:
 - [backend/src/database.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-f74254c83354678ae4a3a3205ddab3712d159c21db220b4793073cd2f429b8c9): you are getting rid of this hard-coded list of ressource, and consume data from your local postgreSQL instead
 - [backend/src/server.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-36e2c2dd1e67a7419cef780285f514e743e48ac994a01526288acd31707e09ae): make your service `async` since consomming data from postgreSQL is asynchronous. Renamed `DB` to `RDB` (stands for Relational Data Base)
 
-**Important**: Make sure your database is still running in your container!
+**Important**: Make sure your database is still running!
 
 Then, start your api:
 ```sh
