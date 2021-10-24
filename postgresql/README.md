@@ -238,20 +238,36 @@ From your pgAdmin UI, create a new view with name `orders_with_contractor` with 
 
 From your group's API, you need to install a new node module to interact with Postgres: [node-postgres](https://node-postgres.com)
 
+You will also install [dotenv](https://www.npmjs.com/package/dotenv) node module to manage database credentials on your different
+environments (your machine and scaleway).
+
 To install it, like any other node modules, type:
 ```sh
 # from your backend/ folder (e.g. for group 13: groupe-13/backend)
 # select correct version of node (v16)
 nvm use v16
 # from your web api repository
-npm i --save pg
+npm i --save pg dotenv
 ```
 
-Copy the follwing changes in your backend:
-- [backend/src/database.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/files#diff-f74254c83354678ae4a3a3205ddab3712d159c21db220b4793073cd2f429b8c9): you are getting rid of this hard-coded list of ressource, and consume data from your local postgreSQL instead
-- [backend/src/server.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/files#diff-36e2c2dd1e67a7419cef780285f514e743e48ac994a01526288acd31707e09ae): make your service `async` since consomming data from postgreSQL is asynchronous. Renamed `DB` to `RDB` (stands for Relational Data Base)
+From your groupeXX/backend folder, create a new `.env` file with:
+```sh
+# inside backend/.env
+RDB_HOST=localhost
+RDB_PORT=5432
+RDB_DATABASE=garlaxy
+RDB_USER=sigl2022
+RDB_PASSWORD=sigl2022
+```
+> Note: you can look on [groupe's 13 .env file](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/2b4add960335137e5e248c1f2c899ca0d3d094b2?authenticity_token=oZuAuFViTpP2mUpw7Zb8iFLSNIWiM0%2FhJxB2xVkgXb4Ar5OTQxTegu833gGxS%2B2tHTv9qTHHF%2FzgqR37kspzCA%3D%3D&file-filters%5B%5D=.js&file-filters%5B%5D=dotfile#diff-1be57eb01a2c4a2d25ef8d2f4caada9bea1eefb6df15f8c37ac385b92708844a)
 
-Start your api:
+Copy the follwing changes in your backend:
+- [backend/src/database.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-f74254c83354678ae4a3a3205ddab3712d159c21db220b4793073cd2f429b8c9): you are getting rid of this hard-coded list of ressource, and consume data from your local postgreSQL instead
+- [backend/src/server.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-36e2c2dd1e67a7419cef780285f514e743e48ac994a01526288acd31707e09ae): make your service `async` since consomming data from postgreSQL is asynchronous. Renamed `DB` to `RDB` (stands for Relational Data Base)
+
+**Important**: Make sure your database is still running in your container!
+
+Then, start your api:
 ```sh
 # from backend/
 # select correct version of node
@@ -270,3 +286,29 @@ npm start
 Login on your frontend, and you should see the ressource table, but this time the API is serving data from postgres.
 
 
+## Step 6: Configure your API to log on the production database
+
+We've deployed a database for each group on a separated Scaleway VM.
+
+> Note: The production database is **not** open on internet but only in a private network
+> between your group's scaleway instances. This means you can access production database **only** from
+> your group's scaleway VM.
+
+Each group will connect to its own database with the following credentials:
+- Database host: pro.postgres.arla-sigl.fr (same for all group)
+- Database name: garlaxy-group-XX
+- Database user: garlaxy-group-XX
+- Database password: garlaxy-group-XX
+- Database port: 5432
+
+You don't want to push database credentials on your github repository, so you will use github secrets (like for CI/CD workshop).
+
+From your Group's project on github. Go to Settings > Secrets and add secrets with the one above (adapting XX to your group number).
+![secrets](docs/secrets.png)
+
+Adapt your .github/workflows/main.yml by overriding your `backend/.env` file before building your image. 
+
+Copy the follwing change in your group's .github/workflows/ folder:
+- [.github/workflows/main.yml](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/17cce83fbcb4b8cdcad0d7b53c64ed66b2235e6d#diff-7829468e86c1cc5d5133195b5cb48e1ff6c75e3e9203777f6b2e379d9e4882b3)
+
+Commit and push, and your web-api should read ressources catalog from database.

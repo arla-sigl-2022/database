@@ -111,8 +111,9 @@ We've prepared a script to load all comments based on a [csv file of 16000+ walm
 
 > Note: comments are not really matching our garlarxy ressources, but it will do for our case!
 
-We then generated comments TSV (Tab Seperated Value) with comments attached to orders.
-You can have a look at file here: [scripts/data/comments.tsv](scripts/data/comments.tsv)
+This script is based on large file that we can't push on this repository.
+
+Download [comments.tsv (https://files.groupe13.arla-sigl.fr/comments.tsv)](https://files.groupe13.arla-sigl.fr/comments.tsv) file and place it inside `scripts/data/comments.tsv` folder.
 
 To import those comments, you need to copy scripts folder (containing comments.tsv) inside the mongo container and import them using [mongoimport](https://docs.mongodb.com/database-tools/mongoimport/):
 ```bash
@@ -150,4 +151,89 @@ db.getCollection('comments').find({contractor: "Made In Space Europe"});
 
 ## Step 5: Integrate comment database to your Web API
 
-Todo during the week...
+You want your web-api to read comments you've imported in mongo.
+
+To interact from your node api with mongo, you will use the [mongodb](https://www.npmjs.com/package/mongodb) node module.
+
+You will also install [body-parser](https://www.npmjs.com/package/body-parser) node modules, necessary for next step (to read/parse incomming POST body).
+
+From your group's project, go in backend/ folder and install mongodb node module:
+```sh
+# from backend/
+nvm use v16
+npm i --save mongodb body-parser
+```
+
+Then adapt the following changes:
+- Add your database connection credentials to your existing  `backend/.env` file:
+```sh
+# inside backend/.env
+# ...
+DDB_HOST=localhost
+DDB_PORT=27017
+DDB_USER=sigl2022
+DDB_PASSWORD=sigl2022
+DDB_AUTH_SOURCE=admin
+```
+> Note: you can check [how group 13's .env file looks like](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json&file-filters%5B%5D=dotfile#diff-1be57eb01a2c4a2d25ef8d2f4caada9bea1eefb6df15f8c37ac385b92708844a)
+- [backend/src/database.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json&file-filters%5B%5D=dotfile#diff-f74254c83354678ae4a3a3205ddab3712d159c21db220b4793073cd2f429b8c9):
+    - adds a new `DDB` object (DDB stands for Document Database) exposing method to query mongo
+    - adds a new `getContractors` method in the RDB database necessary for next step
+- [backend/src/server.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json&file-filters%5B%5D=dotfile#diff-36e2c2dd1e67a7419cef780285f514e743e48ac994a01526288acd31707e09ae)
+    - Exposes GET `/v1/contractor` route; get contractors that delivers garlaxy ressources
+    - Exposes POST `/v1/contractor/comment` route: get a page of comments for a given contractor (base on its name)
+
+## Step 6: Create a new view to display contractor's comments
+
+**Objective**: Create a new contractor tab where user can select a contractor and read latests comments:
+![contractors-view.png](docs/contractors-view.png)
+
+You may have noticed the `... days ago` in the comment's date. 
+
+You will be using [date-fns](https://www.npmjs.com/package/date-fns) node modules to format dates.
+
+From your group's frontend folder:
+```sh
+# from frontend/
+nvm use v16
+npm i --save date-fns
+```
+
+From your group's frontend project, adapt the follwing changes:
+- [frontend/src/App.css](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json#diff-a335e6772310196bfa0c52a745f82a727e22185ac26025ee94a46364f7fe09aa): add css class to style comment list
+- **New file** [frontend/src/Comments.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json#diff-f945a5050ddd677cd0debbde2c22bcad706f018d766a18d8a37f8546fa305f83): Component that fetch and displays comments base on a selected contractor
+- **New file** [frontend/src/Contractors.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json#diff-d8b9e8dd61c5a6119a034a97785e1db6058e4884082c8b6ef520b801fbed63bf): Component that fetch and displays contractors in a dropdown button
+- [frontend/src/Content.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json#diff-6ee7f9aad46ed7e9368b1c441b405d6ba99294a53013fea551657d30943ea3ad): adds the new `Contractor` routing rule
+- [frontend/src/SideMenu.js](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json#diff-b7e652542a10eb8cbb6db6af86f6f783bc0bd6147a56c883de33e9e1d0a8bd08): Adding the `Contractor` menu to the side menu.
+
+Run your frontend (make sure your backend and databases are running locally):
+```sh
+# from frontend/
+nvm use v16
+npm start
+```
+
+Run your frontend locally, and you should be able to see comments on contractors!
+
+## Step 7: Adapt your web-api for production Mongo DB
+
+**Objective**: Like for postgres, you want your web-API to read from the production database when your web-API is deployed on production (e.g. on your group's Scaleway machine).
+
+Like for postgres, we prepared a Mongo database where your web-api can read from in production.
+
+Credentials are (adapt XX with your group number):
+- Database host (`DDB_HOST`): pro.mongo.arla-sigl.fr
+- Database port (`DDB_PORT`): 27017
+- Database user (`DDB_USER`): groupe-XX
+- Database password (`DDB_PASSWORD`): groupe-XX
+- Databae auth source (`DDB_AUTH_SOURCE`): groupe-XX
+
+Create the secrets above in your Github's group project Settings > Secrets. You should have those settings created:
+![secrets](docs/secrets.png)
+
+You only have to adapt the existing `.env creation step` in your github workflow.:
+- [.github/workflows/main.yml](https://github.com/arla-sigl-2022/groupe-13/pull/4/commits/21a44962a7190b2c96ed5168d57a968519a5b2da?authenticity_token=6fCxLMoDMqFK5lHriw4ap0fbMksUruqO6J8ex6wqExahJmwZSjzyHdQaIhCOHVR5W7z9ZsT3ja5qjhBdM8NKUA%3D%3D&file-filters%5B%5D=.css&file-filters%5B%5D=.js&file-filters%5B%5D=.json&file-filters%5B%5D=.yml#diff-7829468e86c1cc5d5133195b5cb48e1ff6c75e3e9203777f6b2e379d9e4882b3): adds mongo's `DDB_` variables from your github secrets
+
+You should be all set!
+
+Just commit/push and you should be able to read comments from your group's project URL (e.g. groupeXX.arla-sigl.fr)
