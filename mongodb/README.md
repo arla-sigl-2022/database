@@ -113,7 +113,7 @@ We've prepared a script to load all comments based on a [csv file of 16000+ walm
 
 This script is based on large file that we can't push on this repository.
 
-Download [comments.tsv (https://files.groupe13.arla-sigl.fr/comments.tsv)](https://files.groupe13.arla-sigl.fr/comments.tsv) file and place it inside `scripts/data/comments.tsv` folder.
+Download [comments.tsv (https://files.groupe13.arla-sigl.fr/data/comments.tsv)](https://files.groupe13.arla-sigl.fr/comments.tsv) file and place it inside `scripts/data/comments.tsv` folder.
 
 To import those comments, you need to copy scripts folder (containing comments.tsv) inside the mongo container and import them using [mongoimport](https://docs.mongodb.com/database-tools/mongoimport/):
 ```bash
