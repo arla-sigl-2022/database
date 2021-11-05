@@ -225,10 +225,10 @@ Like for postgres, we prepared a Mongo database where your web-api can read from
 Credentials are (adapt XX with your group number):
 - Database host (`DDB_HOST`): pro.mongo.arla-sigl.fr
 - Database port (`DDB_PORT`): 27017
-- Database name (`DDB_DATABASE`): groupe-XX
-- Database user (`DDB_USER`): groupe-XX
-- Database password (`DDB_PASSWORD`): groupe-XX
-- Databae auth source (`DDB_AUTH_SOURCE`): groupe-XX
+- Database name (`DDB_DATABASE`): garlaxy-group-13
+- Database user (`DDB_USER`): garlaxy-group-13
+- Database password (`DDB_PASSWORD`): garlaxy-group-13
+- Databae auth source (`DDB_AUTH_SOURCE`): garlaxy-group-13
 
 Create the secrets above in your Github's group project Settings > Secrets. You should have those settings created:
 ![secrets](docs/secrets.png)
